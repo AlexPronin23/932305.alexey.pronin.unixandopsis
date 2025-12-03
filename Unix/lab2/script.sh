@@ -1,23 +1,64 @@
 #!/bin/sh
-rm -f /shared/*
+
+directory="/shared"
+lock_file="$directory/.lock"
+
+
+mkdir -p "$directory"
+touch "$lock_file"
+
+
 ID=$(uuidgen)
 seq=1
+
+echo "Container started with ID: $ID"
+
 while true; do
-        filename=$(
-        flock -x 200
-        N=1
-while [ -e "/shared/$(printf "%03d" $N)" ]; do
-        N=$(expr $N + 1)
-done
-filename="/shared/$(printf "%03d" $N)"
-touch "$filename"
-echo "$filename"
-) 200>/shared/lockfile
-echo "identifier: $ID" > "$filename"
-echo "sequence: $seq" >> "$filename"
-echo "$(date '+%Y-%m-%d %H:%M:%S'): Created file $filename with ID $ID and sequence $seq"
-seq=$(expr $seq + 1)
-sleep 1
-echo "$(date '+%Y-%m-%d %H:%M:%S'): Deleted file $filename"
-rm "$filename"
+
+    exec 200>"$lock_file"
+    
+
+    flock -x 200
+    
+
+    filename=""
+    
+
+    for i in $(seq -w 1 999); do
+        if [ ! -e "$directory/$i" ]; then
+            filename="$i"
+            break
+        fi
+    done
+    
+
+    if [ -n "$filename" ]; then 
+        echo "identifier: $ID" > "$directory/$filename"
+        echo "sequence: $seq" >> "$directory/$filename"
+        echo "$(date '+%Y-%m-%d %H:%M:%S'): Created file $filename with ID $ID and sequence $seq"
+    fi
+    
+
+    flock -u 200
+    
+
+    exec 200>&-
+    
+
+    if [ -n "$filename" ] && [ -f "$directory/$filename" ]; then
+
+        sleep 1
+        
+
+        rm "$directory/$filename"
+        echo "$(date '+%Y-%m-%d %H:%M:%S'): Deleted file $filename"
+
+        seq=$(expr $seq + 1)
+    else
+
+        echo "$(date '+%Y-%m-%d %H:%M:%S'): No free slots available"
+    fi
+    
+
+    sleep 1
 done
