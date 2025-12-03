@@ -40,7 +40,7 @@ while true; do
 
     flock -u 200
     
-    # exec 200>&-
+
     
     if [ -n "$filename" ] && [ -f "$directory/$filename" ]; then
 
