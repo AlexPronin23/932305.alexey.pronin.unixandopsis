@@ -11,12 +11,11 @@ touch "$lock_file"
 ID=$(uuidgen)
 seq=1
 
+exec 200>"$lock_file"
+
 echo "Container started with ID: $ID"
 
 while true; do
-
-    exec 200>"$lock_file"
-    
 
     flock -x 200
     
@@ -41,15 +40,12 @@ while true; do
 
     flock -u 200
     
-
-    exec 200>&-
+    # exec 200>&-
     
-
     if [ -n "$filename" ] && [ -f "$directory/$filename" ]; then
 
         sleep 1
         
-
         rm "$directory/$filename"
         echo "$(date '+%Y-%m-%d %H:%M:%S'): Deleted file $filename"
 
