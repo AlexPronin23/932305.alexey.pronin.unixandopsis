@@ -1,4 +1,4 @@
-obj-m += tsu_module.o  
+obj-m += ko.o  
  
 PWD := $(CURDIR) 
  
